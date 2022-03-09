@@ -1,0 +1,88 @@
+﻿#kind: Namespace
+#apiVersion: v1
+#metadata:
+#  name: edm-rflocal
+#---
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: jobsdinamicos
+  namespace: edm-rflocal
+spec:
+  replicas: 1 # Número de pods
+  selector:
+    matchLabels:
+      app: deployment-edm-rflocal-jobsdinamicos
+  template:
+    metadata:
+      labels:
+        app: deployment-edm-rflocal-jobsdinamicos
+    spec:
+      containers:
+      - name: jobsdinamicos
+        image: ImageName
+        ports:
+        - containerPort: 80
+        env: # Variáveis de ambientes
+        - name: ASPNETCORE_ENVIRONMENT # Nome da variável
+          value: Uat
+        - name: ConnectionStrings__BaseMonitoria
+          value: server=monitoria-edm-uat1;port=3306;user=lmonitoria_edm;password=SecretPass;database=monitoria_edm
+        - name: ConnectionStrings__BaseGlobal
+          value: Data Source=NRIOC686USQ1;Initial Catalog=GLOBAL; User ID=SecretUser; Password=SecretPass;
+        - name: SecretGlobal
+          value: LEAVINTERCEPTADOR
+        - name: SecretMonitoria
+          value: LMONITORIA_EDM
+        resources:
+          requests: # IMPORTANTE! Sempre coloque os limites de uso de recursos do pod. Consequências trágicas caso contrário...
+            memory: "200Mi" # Memória RESERVADA para cada pod, como "200Mi" ou "1Gi"
+            cpu: "250m" # CPU RESERVADA para cada pod, como "50m" ou "1", onde o "m" significa 0,001 de núcleo de CPU 
+          limits:
+            memory: "1Gi" # Memória MÁXIMA que cada pod poderá usar
+            cpu: "1" # CPU MÁXIMA que cada pod poderá usar
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: servico-jobsdinamicos
+spec:
+  selector:
+    app: deployment-edm-rflocal-jobsdinamicos
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP # Geralmente este é o tipo de Service (exceções existem, como NodePort)
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-jobsdinamicos
+spec:
+  rules:
+  - host: jobsdinamicos.uat.eks-edm.container.btgpactual.net
+    http:
+      paths:
+      - path: / # Caminho padrão, raiz do host
+        pathType: Prefix
+        backend:
+          service: 
+           name: servico-jobsdinamicos
+           port: 
+            number: 80
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name:  hpa-jobsdinamicos
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1 # Usar a mesma versão de API definida no deployment
+    kind: Deployment
+    name: jobsdinamicos
+  minReplicas: 1 # Número mínimo de pods
+  maxReplicas: 1 # Número máximo de pods
+  targetCPUUtilizationPercentage: 60 # Critério para escalar os pods. Ex: uso médio de CPU tem que ficar abaixo        
+                                     # de 60% do setado no requests
+  

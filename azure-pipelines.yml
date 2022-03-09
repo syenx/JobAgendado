@@ -1,0 +1,81 @@
+# 'Allow scripts to access the OAuth token' was selected in pipeline.  Add the following YAML to any steps requiring access:
+#       env:
+#           MY_ACCESS_TOKEN: $(System.AccessToken)
+# Variable 'AWS.Profile' was defined in the Variables tab
+# Variable 'ECR.NAME' was defined in the Variables tab
+# Variable Group 'EDM - Global Variables' was defined in the Variables tab
+trigger:
+  branches:
+    include:
+    - refs/heads/main
+name: $(Build.DefinitionName)_$(date:yyyyMMdd)$(rev:.r)
+jobs:
+- job: Job_1
+  displayName: Build
+  pool:
+    name: DockerAgent
+  steps:
+  - checkout: self
+    persistCredentials: True
+  - task: CmdLine@2
+    displayName: AWS Login
+    inputs:
+      script: >-
+        aws --version
+
+
+        echo aws ecr get-login-password --region $(AWS.Region) | docker login --username AWS --password-stdin 882197878841.dkr.ecr.$(AWS.Region).amazonaws.com/edm-hangfire
+
+
+        aws ecr get-login-password --region $(AWS.Region) --profile $(Aws.Profile) | docker login --username AWS --password-stdin $(ECR.ACCOUNT).dkr.ecr.$(AWS.Region).amazonaws.com/$(ECR.NAME)
+  - task: CmdLine@2
+    displayName: Nuget
+    inputs:
+      script: >-
+        sed -i 's;</packageSources>;</packageSources><packageSourceCredentials><EDM.Core><add key="Username" value="any" /><add key="ClearTextPassword" value="$(System.AccessToken)" /></EDM.Core></packageSourceCredentials>;' nuget.config
+
+
+        cat nuget.config
+  - task: CmdLine@2
+    displayName: Docker Build
+    inputs:
+      script: >
+        docker build -t   $(ECR.ACCOUNT).dkr.ecr.$(AWS.Region).amazonaws.com/$(ECR.NAME):$(Build.BuildNumber) .
+
+
+        echo docker - Success
+  - task: CmdLine@2
+    displayName: Docker Push
+    inputs:
+      script: docker push  $(ECR.ACCOUNT).dkr.ecr.$(AWS.Region).amazonaws.com/$(ECR.NAME):$(Build.BuildNumber)
+- job: Job_2
+  displayName: Drop on Folder
+  dependsOn: Job_1
+  pool:
+    name: DotNetV2
+  steps:
+  - checkout: self
+  - task: PowerShell@2
+    displayName: PowerShell Script
+    inputs:
+      targetType: inline
+      script: >-
+        (Get-Content -Path kubernetes.dev.yaml) | ForEach-Object {$_ -Replace 'ImageName' , '$(ECR.ACCOUNT).dkr.ecr.$(AWS.Region).amazonaws.com/$(ECR.NAME):$(Build.BuildNumber)'} | Set-Content -Path kubernetes.dev.yaml
+
+
+        (Get-Content -Path kubernetes.uat.yaml) | ForEach-Object {$_ -Replace 'ImageName' , '$(ECR.ACCOUNT).dkr.ecr.$(AWS.Region).amazonaws.com/$(ECR.NAME):$(Build.BuildNumber)'} | Set-Content -Path kubernetes.uat.yaml
+
+
+        (Get-Content -Path kubernetes.prod.yaml) | ForEach-Object {$_ -Replace 'ImageName' , '$(ECR.ACCOUNT).dkr.ecr.$(AWS.Region).amazonaws.com/$(ECR.NAME):$(Build.BuildNumber)'} | Set-Content -Path kubernetes.prod.yaml
+  - task: CopyFiles@2
+    displayName: Copy kubernetes.*.yaml
+    inputs:
+      Contents: '*.yaml'
+      TargetFolder: $(Build.ArtifactStagingDirectory)
+  - task: PublishBuildArtifacts@1
+    displayName: Publish Artifact
+    inputs:
+      ArtifactName: $(Build.BuildNumber)
+      ArtifactType: FilePath
+      TargetPath: '\\dsap394ufs\VSTS\DROPS\$(Build.DefinitionName)'
+...
