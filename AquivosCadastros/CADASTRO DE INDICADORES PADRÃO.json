@@ -1,0 +1,38 @@
+[
+  {
+    "id": 2,
+    "nome": "Volumetria",
+    "sqlConsulta": "SELECT total FROM monitoria_edm.rf_indicador_volumetria where date(data_inclusao) = date(now()) limit 1 ;",
+    "tipo": 0,
+    "ativo": true
+  },
+  {
+    "id": 3,
+    "nome": "Passivos Bancarios",
+    "sqlConsulta": " Select ( SELECT    COUNT(*)       FROM MonitorAtivosACalcularPrecoIntegrado PENDENTE         LEFT JOIN MonitorAtivosCalcularPrecoIntegrado CALCULADOS         ON PENDENTE.COD_ATIVO = CALCULADOS.COD_ATIVO       WHERE (        ('PASSIVO' = 'TVM' AND PENDENTE.COD_GRUPO_CONTABIL IN ('CRA', 'CRI', 'DEB')) OR        ('PASSIVO' = 'PASSIVO' AND PENDENTE.COD_GRUPO_CONTABIL NOT IN ('CRA', 'CRI', 'DEB')))    ) 'COUNT',( SELECT          COUNT(*)       FROM MonitorAtivosACalcularPrecoIntegrado PENDENTE         LEFT JOIN MonitorAtivosCalcularPrecoIntegrado CALCULADOS         ON PENDENTE.COD_ATIVO = CALCULADOS.COD_ATIVO       WHERE CALCULADOS.COD_ATIVO IS NOT NULL AND       (        ('PASSIVO' = 'TVM' AND PENDENTE.COD_GRUPO_CONTABIL IN ('CRA', 'CRI', 'DEB')) OR        ('PASSIVO' = 'PASSIVO' AND PENDENTE.COD_GRUPO_CONTABIL NOT IN ('CRA', 'CRI', 'DEB'))       )) as  'PRECIFICADOS'      ,(     SELECT          COUNT(*)       FROM MonitorAtivosACalcularPrecoIntegrado PENDENTE         LEFT JOIN MonitorAtivosCalcularPrecoIntegrado CALCULADOS         ON PENDENTE.COD_ATIVO = CALCULADOS.COD_ATIVO       WHERE CALCULADOS.COD_ATIVO IS NULL AND       (        ('PASSIVO' = 'TVM' AND PENDENTE.COD_GRUPO_CONTABIL IN ('CRA', 'CRI', 'DEB')) OR        ('PASSIVO' = 'PASSIVO' AND PENDENTE.COD_GRUPO_CONTABIL NOT IN ('CRA', 'CRI', 'DEB'))       )    ) as PENDENTES   ",
+    "tipo": 2,
+    "ativo": false
+  },
+  {
+    "id": 5,
+    "nome": "TVM Bancarios",
+    "sqlConsulta": " Select ( SELECT     COUNT(*)       FROM MonitorAtivosACalcularPrecoIntegrado PENDENTE         LEFT JOIN MonitorAtivosCalcularPrecoIntegrado CALCULADOS         ON PENDENTE.COD_ATIVO = CALCULADOS.COD_ATIVO       WHERE (        ('TVM' = 'TVM' AND PENDENTE.COD_GRUPO_CONTABIL IN ('CRA', 'CRI', 'DEB')) OR        ('TVM' = 'PASSIVO' AND PENDENTE.COD_GRUPO_CONTABIL NOT IN ('CRA', 'CRI', 'DEB')))    ) 'COUNT',( SELECT          COUNT(*)       FROM MonitorAtivosACalcularPrecoIntegrado PENDENTE         LEFT JOIN MonitorAtivosCalcularPrecoIntegrado CALCULADOS         ON PENDENTE.COD_ATIVO = CALCULADOS.COD_ATIVO       WHERE CALCULADOS.COD_ATIVO IS NOT NULL AND       (        ('TVM' = 'TVM' AND PENDENTE.COD_GRUPO_CONTABIL IN ('CRA', 'CRI', 'DEB')) OR        ('TVM' = 'PASSIVO' AND PENDENTE.COD_GRUPO_CONTABIL NOT IN ('CRA', 'CRI', 'DEB'))       )) as  'PRECIFICADOS'      ,(     SELECT          COUNT(*)       FROM MonitorAtivosACalcularPrecoIntegrado PENDENTE         LEFT JOIN MonitorAtivosCalcularPrecoIntegrado CALCULADOS         ON PENDENTE.COD_ATIVO = CALCULADOS.COD_ATIVO       WHERE CALCULADOS.COD_ATIVO IS NULL AND       (        ('TVM' = 'TVM' AND PENDENTE.COD_GRUPO_CONTABIL IN ('CRA', 'CRI', 'DEB')) OR        ('TVM' = 'PASSIVO' AND PENDENTE.COD_GRUPO_CONTABIL NOT IN ('CRA', 'CRI', 'DEB'))       )    ) as PENDENTES   ",
+    "tipo": 2,
+    "ativo": false
+  },
+  {
+    "id": 6,
+    "nome": "Ativos Cadastrados",
+    "sqlConsulta": "select qtd_ativos qtd from monitoria_edm.rf_indicador_ativos_cadastrados",
+    "tipo": 0,
+    "ativo": true
+  },
+  {
+    "id": 7,
+    "nome": "Erros Jobs Agendados",
+    "sqlConsulta": "select i.Nome Job, count(i.id) Quantidade from monitoria_edm.rf_ind_erros_jobs_agendados t inner join monitoria_edm.Indicadores i on t.jobId = i.Id where Date(t.data_inclusao) = Date(@Data) group by i.Nome",
+    "tipo": 1,
+    "ativo": true
+  },
+ 
+]

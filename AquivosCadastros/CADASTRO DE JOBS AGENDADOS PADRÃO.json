@@ -1,0 +1,165 @@
+[
+  { //VOLUMETRIA ESTÁ CERTO INCLUINDO NA TABELA DE VOLUMETRIA
+    "id": 4,
+    "nome": "Carga Volumetria",
+    "grupo": "indicador-volumetria",
+    "descricao": "Job responsável pela carga de volumetria",
+    "arvoreDados": {
+      "tipo": 0,
+      "filhos": [
+        {
+          "funcao": 0,
+          "sql": "SELECT COUNT(ID) total , GETDATE() data_inclusao     FROM     EDM.TB_INFOHUB_ACOMPANHAMENTO_OPERACAO (NOLOCK)    WHERE     CONVERT(VARCHAR,DH_EVENTO,24) BETWEEN '00:00:00' AND '23:59:00'    AND CONVERT(VARCHAR, DH_EVENTO, 23) = GETDATE() ",
+          "variavelContexto": "selectMonitoria",
+          "tipo": 4,
+          "filhos": null
+        },
+        {
+          "funcao": 1,
+          "sql": " insert into monitoria_edm.rf_indicador_volumetria (total, data_inclusao) values (@total, @data_inclusao)",
+          "variavelContexto": "selectMonitoria",
+          "tipo": 5,
+          "filhos": null
+        }
+      ]
+    },
+    "expressaoCron": "0 0/1 * 1/1 * ? *",
+    "ativo": true
+  },
+  {
+    "id": 5,
+    "nome": "Carga Tabelas Temporarias",
+    "grupo": "indicador-tb-temporaria",
+    "descricao": "Job responsável pela carga da tabela MonitorAtivosACalcularPrecoIntegrado",
+    "arvoreDados": {
+      "tipo": 0,
+      "filhos": [
+        {
+          "funcao": 1,
+          "sql": "truncate table monitoria_edm.MonitorAtivosACalcularPrecoIntegrado",
+          "variavelContexto": null,
+          "tipo": 5,
+          "filhos": null
+        },
+        {
+          "funcao": 0,
+          "sql": "SELECT RF.COD_ATIVO,  COALESCE(COD_CETIP_21, DESCRICAO_ATIVO) AS COD_CLEARING,    DATA_VENCIMENTO,       COD_GRUPO_CONTABIL      FROM ATIVOS_RF RF WITH (NOLOCK)       INNER JOIN ATIVOS AT WITH (NOLOCK)         ON RF.COD_ATIVO = AT.COD_ATIVO       LEFT JOIN DOMINIOEXCECAO DE WITH (NOLOCK)         ON DE.IDEXCECAO = RF.IDEXCECAO       WHERE AT.COD_TIPO_ATIVO IN (5,6)   AND DATA_VENCIMENTO >= CONVERT(DATE, GETDATE())       AND CONVERT(DATE, GETDATE()) >= DATA_EMISSAO    AND (DE.ID_TIPO_EXCECAO <> 722 OR  DE.ID_TIPO_EXCECAO IS NULL)   AND RTRIM(LTRIM(COALESCE(RF.COD_CETIP_21, RF.DESCRICAO_ATIVO))) NOT LIKE '%PACT' AND RTRIM(LTRIM(COALESCE(RF.COD_CETIP_21, RF.DESCRICAO_ATIVO))) NOT LIKE 'XX%'    AND UPPER(RTRIM(LTRIM(RF.DS_TIPO_INSTRUMENTO))) <>  'COE'  ORDER BY RF.COD_CGE_EMISSOR ASC  ",
+          "variavelContexto": "sACalcularPrecoIntegrado",
+          "tipo": 4,
+          "filhos": null
+        },
+        {
+          "funcao": 1,
+          "sql": "INSERT INTO monitoria_edm.MonitorAtivosACalcularPrecoIntegrado (COD_CLEARING,DATA_VENCIMENTO,COD_GRUPO_CONTABIL)VALUES( @COD_CLEARING ,  @DATA_VENCIMENTO ,  @COD_GRUPO_CONTABIL  );",
+          "variavelContexto": "sACalcularPrecoIntegrado",
+          "tipo": 5,
+          "filhos": null
+        }
+      ]
+    },
+    "expressaoCron": "0 0/1 * 1/1 * ? *",
+    "ativo": true
+  },
+  {
+    "id": 6,
+    "nome": "Carga Tabelas Temporarias",
+    "grupo": "indicador-tb-temporaria",
+    "descricao": "Job responsável pela carga da tabela MonitorAtivosCalcularPrecoIntegrado",
+    "arvoreDados": {
+      "tipo": 0,
+      "filhos": [
+        {
+          "funcao": 1,
+          "sql": "truncate table monitoria_edm.MonitorAtivosCalcularPrecoIntegrado",
+          "variavelContexto": null,
+          "tipo": 5,
+          "filhos": null
+        },
+        {
+          "funcao": 0,
+          "sql": " SELECT  COD_ATIVO,\tDATA\t,COD_PRACA\t,COD_FEEDER\t,COD_CAMPO\t,DADO_NUM\t,FATOR_AJUSTE\t,PREVISAO\t,VL_REBOOK FROM HISTORICAL_DATA..HISTDATA_DADOS (NOLOCK) WHERE COD_PRACA = 'BPRI' AND COD_CAMPO = 310  AND COD_FEEDER = 17  AND DATA BETWEEN CONVERT(DATE, GETDATE()) AND CONVERT(DATE, GETDATE())  ORDER BY COD_ATIVO",
+          "variavelContexto": "CalcularPrecoIntegrado",
+          "tipo": 4,
+          "filhos": null
+        },
+        {
+          "funcao": 1,
+          "sql": "INSERT INTO monitoria_edm.MonitorAtivosCalcularPrecoIntegrado ( COD_ATIVO,  DATA,  COD_PRACA,  COD_FEEDER,  COD_CAMPO,  DADO_NUM,  FATOR_AJUSTE,  PREVISAO,  VL_REBOOK) VALUES ( @COD_ATIVO, @DATA, @COD_PRACA, @COD_FEEDER, @COD_CAMPO, @DADO_NUM, @FATOR_AJUSTE, @PREVISAO, @VL_REBOOK);",
+          "variavelContexto": "CalcularPrecoIntegrado",
+          "tipo": 5,
+          "filhos": null
+        }
+      ]
+    },
+    "expressaoCron": "0 0/1 * 1/1 * ? *",
+    "ativo": true
+  },
+  {
+    "id": 7,
+    "nome": "Carga Tabelas Temporarias A",
+    "grupo": "indicador-tb-temporaria",
+    "descricao": "Job responsável pela carga da tabela MonitorAtivosCalcularPrecoIntegrado",
+    "arvoreDados": {
+      "tipo": 0,
+      "filhos": [
+        {
+          "funcao": 1,
+          "sql": "truncate table monitoria_edm.MonitorAtivosCalcularPrecoIntegrado",
+          "variavelContexto": null,
+          "tipo": 5,
+          "filhos": null
+        },
+        {
+          "funcao": 0,
+          "sql": " SELECT  COD_ATIVO,\tDATA\t,COD_PRACA\t,COD_FEEDER\t,COD_CAMPO\t,DADO_NUM\t,FATOR_AJUSTE\t,PREVISAO\t,VL_REBOOK FROM HISTORICAL_DATA..HISTDATA_DADOS (NOLOCK) WHERE COD_PRACA = 'BPRI' AND COD_CAMPO = 310  AND COD_FEEDER = 17  AND DATA BETWEEN CONVERT(DATE, GETDATE()) AND CONVERT(DATE, GETDATE())  ORDER BY COD_ATIVO",
+          "variavelContexto": "CalcularPrecoIntegrado",
+          "tipo": 4,
+          "filhos": null
+        },
+        {
+          "funcao": 1,
+          "sql": "INSERT INTO monitoria_edm.MonitorAtivosCalcularPrecoIntegrado ( COD_ATIVO,  DATA,  COD_PRACA,  COD_FEEDER,  COD_CAMPO,  DADO_NUM,  FATOR_AJUSTE,  PREVISAO,  VL_REBOOK) VALUES ( @COD_ATIVO, @DATA, @COD_PRACA, @COD_FEEDER, @COD_CAMPO, @DADO_NUM, @FATOR_AJUSTE, @PREVISAO, @VL_REBOOK);",
+          "variavelContexto": "CalcularPrecoIntegrado",
+          "tipo": 5,
+          "filhos": null
+        }
+      ]
+    },
+    "expressaoCron": "0 0/1 * 1/1 * ? *",
+    "ativo": true
+  },
+  {
+    "id": 8,
+    "nome": "Carga Tabelas Ativos cadastrados",
+    "grupo": "indicador-ativos-cadastrado",
+    "descricao": "Job responsável pela carga da tabela rf_indicador_ativos_cadastrados",
+    "arvoreDados": {
+      "tipo": 0,
+      "filhos": [
+        {
+          "funcao": 1,
+          "sql": "truncate table monitoria_edm.rf_indicador_ativos_cadastrados",
+          "variavelContexto": null,
+          "tipo": 5,
+          "filhos": null
+        },
+        {
+          "funcao": 0,
+          "sql": "SELECT    COUNT(DOE.IdExcecao) qtd_ativos      FROM          EDM.TB_RFON_RELACIONAMENTO_ATIVO_EXCECAO REL WITH (NOLOCK)          LEFT JOIN ATIVOS_RF RF WITH (NOLOCK) ON RF.COD_ATIVO = REL.COD_ATIVO         LEFT JOIN DOMINIOEXCECAO DOE WITH (NOLOCK) ON DOE.IdExcecao = REL.ID_EXCECAO          LEFT JOIN EDM.TB_DOMINIO DOM WITH (NOLOCK) ON DOE.ID_TIPO_EXCECAO = DOM.ID_DOMINIO        WHERE REL.DT_EVENTO  >= CASE WHEN getdate() IS NULL THEN REL.DT_EVENTO ELSE getdate() END      AND DOE.IdExcecao= CASE WHEN 0 IS NULL THEN DOE.IdExcecao ELSE 0 END      AND UPPER(RTRIM(LTRIM(RF.DS_TIPO_INSTRUMENTO))) <>  'COE'  ",
+          "variavelContexto": "cargaAtivosCad",
+          "tipo": 4,
+          "filhos": null
+        },
+        {
+          "funcao": 1,
+          "sql": "INSERT INTO monitoria_edm.rf_indicador_ativos_cadastrados (qtd_ativos,data_inclusao) VALUES\t(@qtd_ativos, sysdate(3));",
+          "variavelContexto": "cargaAtivosCad",
+          "tipo": 5,
+          "filhos": null
+        }
+      ]
+    },
+    "expressaoCron": "0 0/1 * 1/1 * ? *",
+    "ativo": true
+  }
+]
